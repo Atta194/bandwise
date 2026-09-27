@@ -49,13 +49,45 @@ export function ListeningTest({
   const [playingPart, setPlayingPart] = useState<number | null>(null);
   const [gapLeft, setGapLeft] = useState<number | null>(null);
   const [volume, setVolume] = useState(1);
-  const [fileFailed, setFileFailed] = useState<Set<number>>(new Set());
   const [written, setWritten] = useState<Set<number>>(new Set());
   const [speed, setSpeed] = useState(1);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const gapTimer = useRef<number | null>(null);
   const speech = useSpeechEngine();
+  // Each recording is fetched once and played from memory. The hosting layer
+  // answers a range request with a plain 200 and no accept-ranges header, which
+  // some browsers refuse to play as a media source; a blob has no such problem,
+  // and fetching first also lets the next part be ready before the gap ends.
+  const blobs = useRef<Map<number, string>>(new Map());
+  const [loadingPart, setLoadingPart] = useState<number | null>(null);
+
+  useEffect(() => {
+    const cache = blobs.current;
+    return () => {
+      for (const url of cache.values()) URL.revokeObjectURL(url);
+      cache.clear();
+    };
+  }, []);
+
+  const preparePart = useCallback(
+    async (partNumber: number): Promise<string | null> => {
+      const ready = blobs.current.get(partNumber);
+      if (ready) return ready;
+      const target = parts.find((p) => p.part === partNumber);
+      if (!target?.audio) return null;
+      try {
+        const response = await fetch(target.audio);
+        if (!response.ok) return null;
+        const bytes = await response.arrayBuffer();
+        const url = URL.createObjectURL(new Blob([bytes], { type: "audio/mpeg" }));
+        blobs.current.set(partNumber, url);
+        return url;
+      } catch {
+        return null;
+      }
+    },
+    [parts],
+  );
 
   const remaining = useCountdown(run.minutes * 60, () => onSubmit(answers, mode()));
   useScrollToCurrent(current, true);
@@ -81,37 +113,40 @@ export function ListeningTest({
   );
 
   const playPart = useCallback(
-    (partNumber: number) => {
+    async (partNumber: number) => {
       const part = parts.find((p) => p.part === partNumber);
       if (!part) return;
       setActivePart(partNumber);
       setPlayingPart(partNumber);
       setGapLeft(null);
 
-      const canUseFile = Boolean(part.audio) && !fileFailed.has(partNumber);
-      if (canUseFile && audioRef.current) {
-        const element = audioRef.current;
-        element.src = part.audio ?? "";
-        element.volume = volume;
-        element.playbackRate = speed;
-        void element.play().catch(() => {
-          setFileFailed((previous) => new Set(previous).add(partNumber));
-          setPlayingPart(null);
-          // Fall back to the spoken script so the paper can still be sat.
-          speech.play(part.turns, {
-            rate: speed,
-            onDone: () => advance(partNumber),
-          });
-        });
-        return;
+      if (part.audio && !written.has(partNumber)) {
+        if (!blobs.current.has(partNumber)) setLoadingPart(partNumber);
+        const url = await preparePart(partNumber);
+        setLoadingPart(null);
+        if (url && audioRef.current) {
+          const element = audioRef.current;
+          element.src = url;
+          element.volume = volume;
+          element.playbackRate = speed;
+          try {
+            await element.play();
+            // Get the next part ready while this one plays.
+            void preparePart(partNumber + 1);
+            return;
+          } catch {
+            // fall through to the spoken script
+          }
+        }
       }
 
+      setPlayingPart(null);
       speech.play(part.turns, {
         rate: speed,
         onDone: () => advance(partNumber),
       });
     },
-    [parts, fileFailed, volume, speed, speech, advance],
+    [parts, volume, speed, speech, advance, preparePart, written],
   );
 
   // Countdown between parts, then the next one starts by itself.
@@ -206,7 +241,9 @@ export function ListeningTest({
               <p className="mt-2 text-sm leading-relaxed text-ink-soft">{part?.role}</p>
               <p className="mt-3 text-base font-medium">{part?.context}</p>
 
-              <p className="bw-numeric mt-4 text-xs text-ink-soft">{status}</p>
+              <p className="bw-numeric mt-4 text-xs text-ink-soft">
+                {loadingPart ? `Loading part ${loadingPart}…` : status}
+              </p>
 
               <div className="mt-4 border-t border-rule pt-4">
                 <label htmlFor="volume" className="bw-label text-ink-mute">
@@ -292,7 +329,7 @@ export function ListeningTest({
               </ul>
             </div>
 
-            {[...(speech.engineFailed ? [true] : []), fileFailed.size > 0].some(Boolean) ? (
+            {speech.engineFailed && written.size === parts.length ? (
               <div className="mt-5 border border-flag px-4 py-3">
                 <p className="text-xs font-semibold text-flag">
                   This browser would not play the recording.
