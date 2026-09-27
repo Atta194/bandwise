@@ -234,7 +234,7 @@ export function ExamShell({
             {questions}
           </div>
 
-          <footer className="shrink-0 border-t border-rule bg-paper-raised">
+          <footer className="shrink-0 border-t border-rule bg-paper-raised pb-12">
             {paper.length ? (
               <>
                 <div className="flex items-center gap-3 px-3 py-2">
