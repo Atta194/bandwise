@@ -21,6 +21,7 @@ import { AnswerMap, EmptyState, QuestionList, useCountdown, useScrollToCurrent }
 import { useSpeechEngine } from "./use-speech";
 
 const GAP_SECONDS = 12; // the pause the official paper gives between parts
+const CHECK_SECONDS = 120; // the two minutes the official recording leaves at the end
 
 export function ListeningTest({
   run,
@@ -48,6 +49,8 @@ export function ListeningTest({
   const [ended, setEnded] = useState(false);
   const [playingPart, setPlayingPart] = useState<number | null>(null);
   const [gapLeft, setGapLeft] = useState<number | null>(null);
+  // The end-of-recording answer check: null when it is not running.
+  const [checkLeft, setCheckLeft] = useState<number | null>(null);
   const [volume, setVolume] = useState(1);
   const [written, setWritten] = useState<Set<number>>(new Set());
   const [speed, setSpeed] = useState(1);
@@ -63,6 +66,7 @@ export function ListeningTest({
   // handed over to. Both are refs on purpose: see the countdown below.
   const gapEndsAt = useRef<number | null>(null);
   const gapFiredFor = useRef<number | null>(null);
+  const checkEndsAt = useRef<number | null>(null);
   const [loadingPart, setLoadingPart] = useState<number | null>(null);
   // A part whose playback the browser refused. Nothing is skipped for this: the
   // paper waits, and a real press of Play is what continues it.
@@ -111,9 +115,12 @@ export function ListeningTest({
     (finishedPart: number) => {
       setPlayingPart(null);
       if (finishedPart >= parts.length) {
+        // The official recording does not stop the paper dead: it leaves two
+        // minutes to check the answers before the test closes.
         gapEndsAt.current = null;
         setGapLeft(null);
-        setEnded(true);
+        checkEndsAt.current = Date.now() + CHECK_SECONDS * 1000;
+        setCheckLeft(CHECK_SECONDS);
         return;
       }
       gapEndsAt.current = Date.now() + GAP_SECONDS * 1000;
@@ -205,6 +212,29 @@ export function ListeningTest({
     void playPart(next.part);
   }, [gapLeft, activePart, parts, playPart]);
 
+  // The two minutes to check answers, counted in the same wall-clock way and for
+  // the same reason: an effect that is rebuilt on every render would be cleared
+  // before its timer could tick.
+  const finishChecking = useCallback(() => {
+    checkEndsAt.current = null;
+    setCheckLeft(null);
+    setEnded(true);
+  }, []);
+
+  useEffect(() => {
+    if (checkLeft === null) return;
+    const id = window.setInterval(() => {
+      if (checkEndsAt.current === null) return;
+      const left = Math.max(0, Math.ceil((checkEndsAt.current - Date.now()) / 1000));
+      setCheckLeft((current) => (current === left ? current : left));
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [checkLeft === null]);
+
+  useEffect(() => {
+    if (checkLeft === 0) finishChecking();
+  }, [checkLeft, finishChecking]);
+
   // A silent engine or a browser with no voices must not leave the candidate
   // staring at nothing: the written recording opens and is labelled as such.
   useEffect(() => {
@@ -261,9 +291,11 @@ export function ListeningTest({
     ? `Part ${playingPart} is playing`
     : gapLeft !== null
       ? `Pause before part ${activePart + 1} · ${gapLeft}s`
-      : ended
-        ? "The recording has finished"
-        : "Not started";
+      : checkLeft !== null
+        ? `Check your answers · ${Math.floor(checkLeft / 60)}:${String(checkLeft % 60).padStart(2, "0")} left`
+        : ended
+          ? "The recording has finished"
+          : "Not started";
 
   return (
     <>
@@ -287,6 +319,25 @@ export function ListeningTest({
               <p className="bw-numeric mt-4 text-xs text-ink-soft">
                 {loadingPart ? `Loading part ${loadingPart}…` : status}
               </p>
+
+              {checkLeft !== null ? (
+                <div className="mt-4 border border-accent px-4 py-3">
+                  <p className="text-xs font-semibold text-accent">
+                    The recording has finished. You have two minutes to check your answers.
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-ink-soft">
+                    Nothing is marked until you submit, so use this time to fill anything blank and check
+                    your spellings. The whole paper stays open and you can move to any question.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={finishChecking}
+                    className="mt-3 bg-accent px-4 py-2.5 text-xs font-semibold text-paper hover:bg-accent-ink"
+                  >
+                    I have finished checking
+                  </button>
+                </div>
+              ) : null}
 
               {blocked.has(activePart) ? (
                 <div className="mt-4 border border-wrong px-4 py-3">
@@ -381,7 +432,7 @@ export function ListeningTest({
                       ? "playing"
                       : blocked.has(p.part)
                         ? "not started"
-                        : p.part < activePart || ended
+                        : p.part < activePart || ended || checkLeft !== null
                           ? "played"
                           : "waiting";
                   return (
@@ -461,6 +512,7 @@ export function ListeningTest({
             </p>
             <ul className="mt-4 space-y-2 border-y border-rule py-4 text-xs text-ink-soft">
               <li>Parts play in order with a short pause between them.</li>
+              <li>Two minutes are left at the end to check your answers, as in the exam.</li>
               <li>You can answer while it plays and return to any question later.</li>
               <li>Headphones are recommended, as in the exam room.</li>
             </ul>
