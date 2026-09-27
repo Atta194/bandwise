@@ -71,7 +71,7 @@ export function ExamShell({
   finishing: boolean;
   error?: string | null;
 }) {
-  const [mobilePane, setMobilePane] = useState<"source" | "questions">("source");
+  const [sourceShare, setSourceShare] = useState<"small" | "large">("small");
   const [sourceHidden, setSourceHidden] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
 
@@ -168,32 +168,30 @@ export function ExamShell({
         </p>
       ) : null}
 
-      {/* Pane switch, small screens only. */}
-      <div className="shrink-0 border-b border-rule bg-paper-raised px-4 py-2 lg:hidden">
-        <div className="flex gap-1 border border-rule p-0.5">
-          {(["source", "questions"] as const).map((pane) => (
-            <button
-              key={pane}
-              type="button"
-              onClick={() => setMobilePane(pane)}
-              className={
-                "flex-1 px-3 py-2 text-xs font-semibold transition-colors " +
-                (mobilePane === pane ? "bg-ink text-paper" : "text-ink-soft")
-              }
-            >
-              {pane === "source" ? sourceLabel : `${answerLabel} (${answered}/${paper.length})`}
-            </button>
-          ))}
-        </div>
+      {/* On a narrow screen the two panes stack instead of hiding one behind a
+          tab, so the passage is still on screen while the questions scroll. */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-rule bg-paper-raised px-4 py-1.5 lg:hidden">
+        <p className="bw-numeric text-[0.7rem] text-ink-mute">
+          {sourceLabel} above · {answered}/{paper.length} answered
+        </p>
+        <button
+          type="button"
+          onClick={() => setSourceShare((previous) => (previous === "small" ? "large" : "small"))}
+          className="border border-rule-strong px-2.5 py-1.5 text-[0.7rem] font-medium hover:border-ink"
+        >
+          {sourceShare === "small" ? `Bigger ${sourceLabel.toLowerCase()}` : `Smaller ${sourceLabel.toLowerCase()}`}
+        </button>
       </div>
 
-      <div className="flex min-h-0 flex-1">
-        {/* Source pane: its own scroll, always where the candidate left it. */}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        {/* Source pane: its own scroll, its own visible scrollbar, and it never
+            moves when the question pane scrolls. */}
         <aside
           className={
-            "min-h-0 flex-col border-rule lg:flex lg:border-r " +
-            (sourceHidden ? "lg:hidden " : "") +
-            (mobilePane === "source" ? "flex flex-1 lg:flex-none lg:w-[46%] xl:w-[44%]" : "hidden lg:flex-none lg:w-[46%] xl:w-[44%]")
+            "flex min-h-0 flex-col border-rule " +
+            (sourceShare === "small" ? "basis-[36%] " : "basis-[54%] ") +
+            "lg:basis-auto lg:w-[46%] lg:border-r xl:w-[44%] " +
+            (sourceHidden ? "lg:hidden" : "")
           }
         >
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-rule bg-paper-raised px-4 py-2">
@@ -209,15 +207,11 @@ export function ExamShell({
               Hide {sourceLabel.toLowerCase()}
             </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{source}</div>
+          <div className="bw-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain">{source}</div>
         </aside>
 
         {/* Question pane: its own scroll, and the navigator beneath it. */}
-        <section
-          className={
-            "min-h-0 flex-1 flex-col " + (mobilePane === "questions" ? "flex" : "hidden lg:flex")
-          }
-        >
+        <section className="flex min-h-0 flex-1 flex-col">
           {sourceHidden ? (
             <div className="hidden shrink-0 border-b border-rule bg-paper-raised px-4 py-2 lg:block">
               <button
@@ -236,7 +230,7 @@ export function ExamShell({
             </div>
           ) : null}
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
+          <div className="bw-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
             {questions}
           </div>
 
