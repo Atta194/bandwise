@@ -1,5 +1,5 @@
 /**
- * Content model for the Bandwise test engine.
+ * Content model for the Ready Band Pro test engine.
  *
  * Everything the four modules need is described here once, so a new mock is
  * pure data: drop it into the matching content file and the engine picks it up

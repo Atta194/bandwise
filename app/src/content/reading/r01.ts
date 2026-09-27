@@ -2,7 +2,7 @@ import type { ReadingMock } from "../types";
 
 /**
  * Reading mock R01. Three passages, 40 questions, 13 + 13 + 14.
- * Original, copyright safe text written for Bandwise. All factual detail is
+ * Original, copyright safe text written for Ready Band Pro. All factual detail is
  * drawn from the public record.
  */
 export const R01: ReadingMock = {

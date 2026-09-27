@@ -327,7 +327,7 @@ function Landing() {
             <BandCTA to="/account">Create your free account</BandCTA>
             <p className="text-xs leading-relaxed text-ink-mute">
               Every band shown in this app is an estimate from practice marking. It is not an official
-              IELTS score, and Bandwise is not affiliated with IELTS, the British Council, IDP or
+              IELTS score, and Ready Band Pro is not affiliated with IELTS, the British Council, IDP or
               Cambridge University Press and Assessment.
             </p>
           </div>

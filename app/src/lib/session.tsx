@@ -9,8 +9,8 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-const TOKEN_KEY = "bandwise.session";
-const EMAIL_KEY = "bandwise.email";
+const TOKEN_KEY = "readybandpro.session";
+const EMAIL_KEY = "readybandpro.email";
 
 export type PublicUser = {
   id: string;

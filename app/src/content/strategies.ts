@@ -3,7 +3,7 @@
  *
  * Every question family the four modules use has a strategy, three speed tips
  * and the traps that cost marks in that family. This is original writing for
- * Bandwise, following the standard IELTS question families and the practice
+ * Ready Band Pro, following the standard IELTS question families and the practice
  * test format teachers use: tackle the test, then work the strategy for the
  * question types you are losing marks on, then drill those types alone.
  *

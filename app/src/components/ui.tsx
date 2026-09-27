@@ -13,7 +13,7 @@ import { useSession } from "../lib/session";
 export function RecordMark({ className }: { className?: string }) {
   const ticks = Array.from({ length: 12 }, (_, i) => i * 30);
   return (
-    <svg viewBox="0 0 48 48" className={className} role="img" aria-label="Bandwise">
+    <svg viewBox="0 0 48 48" className={className} role="img" aria-label="Ready Band Pro">
       <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" strokeWidth="1.25" />
       <g stroke="currentColor" strokeWidth="1" opacity="0.55">
         {ticks.map((deg) => (
@@ -37,7 +37,7 @@ export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={"inline-flex items-center gap-2.5 " + (className ?? "")}>
       <RecordMark className="h-6 w-6 shrink-0" />
-      <span className="text-[0.95rem] font-semibold tracking-[0.16em] uppercase">Bandwise</span>
+      <span className="text-[0.95rem] font-semibold tracking-[0.16em] uppercase">Ready Band Pro</span>
     </span>
   );
 }
@@ -507,7 +507,7 @@ export function SiteNav() {
   return (
     <header className="sticky top-0 z-30 border-b border-rule bg-paper/95 backdrop-blur">
       <div className="mx-auto flex h-[68px] max-w-[1180px] items-center justify-between gap-6 px-5">
-        <Link to="/" aria-label="Bandwise home">
+        <Link to="/" aria-label="Ready Band Pro home">
           <Wordmark />
         </Link>
 
@@ -588,7 +588,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-rule">
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-3 px-5 py-5">
-          <MeasureNote>Bandwise · practice marking only · every band is an estimate</MeasureNote>
+          <MeasureNote>Ready Band Pro · practice marking only · every band is an estimate</MeasureNote>
           <p className="text-xs text-ink-soft">
             Designed and built by <span className="font-semibold text-ink">Attaullah</span>
           </p>

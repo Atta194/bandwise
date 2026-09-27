@@ -181,7 +181,7 @@ export const WRITING_MOCKS: WritingMock[] = [
             "Farmland replaced by housing and a business park",
             "A rail line with a station on the northern edge",
           ],
-          source: "Original map task written for Bandwise",
+          source: "Original map task written for Ready Band Pro",
         },
       },
       {

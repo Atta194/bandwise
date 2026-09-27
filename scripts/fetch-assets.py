@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Fetch licence-free photographs for the Bandwise build from Wikimedia Commons.
+Fetch licence-free photographs for the Ready Band Pro build from Wikimedia Commons.
 
 Every file is written with its author, licence and source page recorded, so the
 attribution file in the repo is generated from the same run that downloaded the

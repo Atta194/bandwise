@@ -15,7 +15,7 @@ import appMetaJson from "../app-meta.json";
 
 declare const __HF_DESIGN_INSPECTOR__: boolean;
 
-const DEFAULT_TITLE = "Bandwise";
+const DEFAULT_TITLE = "Ready Band Pro";
 const DEFAULT_DESCRIPTION =
   "IELTS Academic practice with the real thing in front of you: four modules, ten mocks, every answer explained.";
 

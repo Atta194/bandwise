@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Full user-path check for the live Bandwise deployment.
+Full user-path check for the live Ready Band Pro deployment.
 
 Two passes:
 

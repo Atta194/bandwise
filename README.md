@@ -1,4 +1,4 @@
-# Bandwise
+# Ready Band Pro
 
 An IELTS Academic practice platform: four modules on one test engine, with
 marking that explains every wrong answer instead of only counting it.
