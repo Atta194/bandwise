@@ -420,6 +420,7 @@ export function ListeningTest({
                 <li>Questions 1 to 10 belong to Part 1, 11 to 20 to Part 2, and so on.</li>
                 <li>You can move between questions at any time with the numbers below.</li>
                 <li>Nothing repeats, so write as you listen.</li>
+                <li>Two minutes are left at the end to check your answers.</li>
               </ul>
             </div>
 
