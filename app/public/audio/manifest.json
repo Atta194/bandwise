@@ -1,0 +1,88 @@
+[
+  {
+    "unit": "L1-A",
+    "turns": 21,
+    "speakers": {
+      "Daniel": "en_AU-librivox-medium#0",
+      "Caller": "en_US-ryan-medium#None"
+    },
+    "file": "app/public/audio/L1-A.mp3",
+    "seconds": 100.6,
+    "kb": 786
+  },
+  {
+    "unit": "L2-A",
+    "turns": 10,
+    "speakers": {
+      "Speaker": "en_US-ryan-medium#None"
+    },
+    "file": "app/public/audio/L2-A.mp3",
+    "seconds": 96.8,
+    "kb": 757
+  },
+  {
+    "unit": "L3-A",
+    "turns": 15,
+    "speakers": {
+      "Dr Osei": "en_AU-librivox-medium#4",
+      "Lena": "en_US-ryan-medium#None",
+      "Marcus": "en_US-amy-medium#None"
+    },
+    "file": "app/public/audio/L3-A.mp3",
+    "seconds": 119.4,
+    "kb": 933
+  },
+  {
+    "unit": "L4-A",
+    "turns": 10,
+    "speakers": {
+      "Lecturer": "en_US-ryan-medium#None"
+    },
+    "file": "app/public/audio/L4-A.mp3",
+    "seconds": 164.5,
+    "kb": 1285
+  },
+  {
+    "unit": "L1-B",
+    "turns": 19,
+    "speakers": {
+      "Ruth": "en_AU-librivox-medium#5",
+      "Caller": "en_US-ryan-medium#None"
+    },
+    "file": "app/public/audio/L1-B.mp3",
+    "seconds": 99.3,
+    "kb": 776
+  },
+  {
+    "unit": "L2-B",
+    "turns": 9,
+    "speakers": {
+      "Warden": "en_AU-librivox-medium#8"
+    },
+    "file": "app/public/audio/L2-B.mp3",
+    "seconds": 101.2,
+    "kb": 791
+  },
+  {
+    "unit": "L3-B",
+    "turns": 16,
+    "speakers": {
+      "Dr Whitfield": "en_AU-librivox-medium#0",
+      "Amina": "en_US-ryan-medium#None",
+      "Tom": "en_US-amy-medium#None"
+    },
+    "file": "app/public/audio/L3-B.mp3",
+    "seconds": 114.6,
+    "kb": 895
+  },
+  {
+    "unit": "L4-B",
+    "turns": 9,
+    "speakers": {
+      "Lecturer": "en_US-ryan-medium#None"
+    },
+    "file": "app/public/audio/L4-B.mp3",
+    "seconds": 157.3,
+    "kb": 1229
+  }
+]
