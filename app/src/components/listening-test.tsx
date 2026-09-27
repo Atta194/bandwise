@@ -59,7 +59,14 @@ export function ListeningTest({
   // some browsers refuse to play as a media source; a blob has no such problem,
   // and fetching first also lets the next part be ready before the gap ends.
   const blobs = useRef<Map<number, string>>(new Map());
+  // When the pause between parts ends, and which part the pause has already
+  // handed over to. Both are refs on purpose: see the countdown below.
+  const gapEndsAt = useRef<number | null>(null);
+  const gapFiredFor = useRef<number | null>(null);
   const [loadingPart, setLoadingPart] = useState<number | null>(null);
+  // A part whose playback the browser refused. Nothing is skipped for this: the
+  // paper waits, and a real press of Play is what continues it.
+  const [blocked, setBlocked] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const cache = blobs.current;
@@ -104,9 +111,12 @@ export function ListeningTest({
     (finishedPart: number) => {
       setPlayingPart(null);
       if (finishedPart >= parts.length) {
+        gapEndsAt.current = null;
+        setGapLeft(null);
         setEnded(true);
         return;
       }
+      gapEndsAt.current = Date.now() + GAP_SECONDS * 1000;
       setGapLeft(GAP_SECONDS);
     },
     [parts.length],
@@ -120,7 +130,7 @@ export function ListeningTest({
       setPlayingPart(partNumber);
       setGapLeft(null);
 
-      if (part.audio && !written.has(partNumber)) {
+      if (part.audio) {
         if (!blobs.current.has(partNumber)) setLoadingPart(partNumber);
         const url = await preparePart(partNumber);
         setLoadingPart(null);
@@ -131,36 +141,69 @@ export function ListeningTest({
           element.playbackRate = speed;
           try {
             await element.play();
+            setBlocked((previous) => {
+              if (!previous.has(partNumber)) return previous;
+              const next = new Set(previous);
+              next.delete(partNumber);
+              return next;
+            });
             // Get the next part ready while this one plays.
             void preparePart(partNumber + 1);
             return;
           } catch {
-            // fall through to the spoken script
+            // The browser refused to start it, usually because it wants a real
+            // press. Do NOT carry on to the next part as if this one was heard.
+            setPlayingPart(null);
+            setBlocked((previous) => new Set(previous).add(partNumber));
+            return;
           }
         }
       }
 
+      // No recording at all for this part: the spoken script covers it.
       setPlayingPart(null);
       speech.play(part.turns, {
         rate: speed,
         onDone: () => advance(partNumber),
       });
     },
-    [parts, volume, speed, speech, advance, preparePart, written],
+    [parts, volume, speed, speech, advance, preparePart],
   );
 
-  // Countdown between parts, then the next one starts by itself.
+  // Countdown between parts. It runs off the wall clock, and the effect depends
+  // only on whether a pause is in progress — nothing that is rebuilt on every
+  // render. The exam clock re-renders this component once a second, and the old
+  // version re-armed a one-second timeout on each of those renders, so the
+  // timeout was cleared just before it could fire: the pause never counted down
+  // and the paper sat there for good instead of starting the next part.
   useEffect(() => {
     if (gapLeft === null) return;
-    if (gapLeft <= 0) {
-      const next = (playingPart ?? activePart) + 1;
-      const target = parts.find((p) => p.part > activePart)?.part ?? activePart + 1;
-      playPart(next >= 1 && next <= parts.length ? next : target);
+    const id = window.setInterval(() => {
+      if (gapEndsAt.current === null) return;
+      const left = Math.max(0, Math.ceil((gapEndsAt.current - Date.now()) / 1000));
+      setGapLeft((current) => (current === left ? current : left));
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [gapLeft === null]);
+
+  // The pause has run out: the next part starts by itself. Guarded so a re-render
+  // at zero cannot start it twice.
+  useEffect(() => {
+    if (gapLeft !== 0) {
+      gapFiredFor.current = null;
       return;
     }
-    const id = window.setTimeout(() => setGapLeft((value) => (value === null ? null : value - 1)), 1000);
-    return () => window.clearTimeout(id);
-  }, [gapLeft, playingPart, activePart, parts, playPart]);
+    if (gapFiredFor.current === activePart) return;
+    gapFiredFor.current = activePart;
+    const next = parts.find((p) => p.part > activePart);
+    if (!next) {
+      gapEndsAt.current = null;
+      setGapLeft(null);
+      setEnded(true);
+      return;
+    }
+    void playPart(next.part);
+  }, [gapLeft, activePart, parts, playPart]);
 
   // A silent engine or a browser with no voices must not leave the candidate
   // staring at nothing: the written recording opens and is labelled as such.
@@ -245,6 +288,33 @@ export function ListeningTest({
                 {loadingPart ? `Loading part ${loadingPart}…` : status}
               </p>
 
+              {blocked.has(activePart) ? (
+                <div className="mt-4 border border-wrong px-4 py-3">
+                  <p className="text-xs font-semibold text-wrong">
+                    The browser did not start the recording by itself.
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-ink-soft">
+                    Press play to carry on. Nothing has been skipped, the paper is waiting for you.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void playPart(activePart)}
+                      className="bg-accent px-4 py-2.5 text-xs font-semibold text-paper hover:bg-accent-ink"
+                    >
+                      Play part {activePart}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWritten((previous) => new Set(previous).add(activePart))}
+                      className="border border-ink px-4 py-2.5 text-xs font-medium hover:bg-ink hover:text-paper"
+                    >
+                      Use the written recording
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="mt-4 border-t border-rule pt-4">
                 <label htmlFor="volume" className="bw-label text-ink-mute">
                   Volume
@@ -309,9 +379,11 @@ export function ListeningTest({
                   const state =
                     playingPart === p.part
                       ? "playing"
-                      : p.part < activePart || ended
-                        ? "played"
-                        : "waiting";
+                      : blocked.has(p.part)
+                        ? "not started"
+                        : p.part < activePart || ended
+                          ? "played"
+                          : "waiting";
                   return (
                     <li key={p.part} className="flex items-center justify-between gap-3">
                       <button
