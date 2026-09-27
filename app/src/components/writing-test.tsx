@@ -132,10 +132,12 @@ export function WritingTest({
           <textarea
             value={drafts[active] ?? ""}
             disabled={busy}
+            spellCheck={false}
+            autoCorrect="off"
+            autoCapitalize="off"
             onChange={(event) =>
               setDrafts((previous) => ({ ...previous, [active]: event.target.value }))
             }
-            spellCheck
             placeholder="Write your answer here. Leave a blank line between paragraphs."
             className="min-h-[420px] w-full flex-1 resize-none border border-rule-strong bg-paper-raised p-4 text-[0.95rem] leading-relaxed outline-none focus:border-accent"
           />

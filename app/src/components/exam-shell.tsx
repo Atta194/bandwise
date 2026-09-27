@@ -76,6 +76,9 @@ export function ExamShell({
   const [reviewOpen, setReviewOpen] = useState(false);
 
   const low = remainingSeconds <= 300;
+  // The official test announces the last ten minutes out loud; the clock then
+  // turns red in the last five.
+  const tenMinuteWarning = remainingSeconds <= 600 && remainingSeconds > 300;
   const paper = nav?.questions ?? [];
   const answered = useMemo(
     () => paper.filter((q) => (nav?.answers[q.n] ?? "").trim() !== "").length,
@@ -127,6 +130,11 @@ export function ExamShell({
               </span>
               <span className="bw-label hidden opacity-60 sm:inline">left</span>
             </div>
+            {tenMinuteWarning ? (
+              <span className="bw-label hidden text-wrong sm:inline" role="status">
+                ten minutes left
+              </span>
+            ) : null}
 
             <button
               type="button"
@@ -188,7 +196,7 @@ export function ExamShell({
             moves when the question pane scrolls. */}
         <aside
           className={
-            "flex min-h-0 flex-col border-rule " +
+            "flex min-h-0 min-w-0 flex-col border-rule " +
             (sourceShare === "small" ? "basis-[36%] " : "basis-[54%] ") +
             "lg:basis-auto lg:w-[46%] lg:border-r xl:w-[44%] " +
             (sourceHidden ? "lg:hidden" : "")
@@ -211,7 +219,7 @@ export function ExamShell({
         </aside>
 
         {/* Question pane: its own scroll, and the navigator beneath it. */}
-        <section className="flex min-h-0 flex-1 flex-col">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col">
           {sourceHidden ? (
             <div className="hidden shrink-0 border-b border-rule bg-paper-raised px-4 py-2 lg:block">
               <button
